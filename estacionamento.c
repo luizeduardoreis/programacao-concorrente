@@ -6,8 +6,7 @@
 
 #define MAXIMO_DE_EXPERIENTES 5
 #define N 20
-#define NUMERO_DE_VAGAS 15
-
+#define NUMERO_DE_VAGAS 10
 
 int experientes_estacionados = 0;
 bool vagas_ocupadas[NUMERO_DE_VAGAS];
@@ -64,6 +63,15 @@ void liberar_vaga(int vaga_idx) {
 	vagas_ocupadas[vaga_idx] = 0;
 }
 
+void print_vagas() {
+	printf("|");
+	for (int i = 0; i < NUMERO_DE_VAGAS; i++) {
+		if (vagas_ocupadas[i]) printf("*|");
+		else printf(" |");
+	}
+	printf("\n\n");
+}
+
 void* iniciante(void* arg) {
 	int id = *((int*) arg);
 	while (1) {
@@ -73,16 +81,17 @@ void* iniciante(void* arg) {
 			pthread_cond_wait(&iniciantes_cond, &mutex);
 		}
 		int vaga = iniciante_estaciona();
+		printf("Iniciante número %d estacionou na vaga: %d\n\n", id, vaga);
+		print_vagas();
 		pthread_mutex_unlock(&mutex);
-		
 
-		printf("Iniciante número %d estacionou na vaga: %d\n", id, vaga);
-		sleep(10);
+		sleep(rand()%(10));
 		
 
 		pthread_mutex_lock(&mutex);
-		printf("Iniciante número %d liberou a vaga: %d\n", id, vaga);
+		printf("Iniciante número %d liberou a vaga: %d\n\n", id, vaga);
 		liberar_vaga(vaga);
+		print_vagas();
 		pthread_cond_broadcast(&iniciantes_cond);
 		pthread_cond_broadcast(&experientes_cond);
 		pthread_mutex_unlock(&mutex);
@@ -92,24 +101,26 @@ void* iniciante(void* arg) {
 void* experiente(void * arg) {
 	int id = *((int*) arg);
 	while (1) {
-		sleep(rand()%(id+1));
+		sleep(rand()%(10));
 		pthread_mutex_lock(&mutex);
 		while (!experiente_pode_estacionar() || experientes_estacionados >= MAXIMO_DE_EXPERIENTES) {
 			pthread_cond_wait(&experientes_cond, &mutex);
 		}
 		experientes_estacionados++;
 		int vaga = experiente_estaciona();
+		printf("Experiente número %d estacionou na vaga: %d\n\n", id, vaga);
+		print_vagas();
 		pthread_mutex_unlock(&mutex);
 		
 
-		printf("Experiente número %d estacionou na vaga: %d\n", id, vaga);
-		sleep(10);
+		sleep(rand()%(10));
 		
 
 		pthread_mutex_lock(&mutex);
-		printf("Experiente número %d liberou a vaga: %d\n", id, vaga);
+		printf("Experiente número %d liberou a vaga: %d\n\n", id, vaga);
 		experientes_estacionados--;
 		liberar_vaga(vaga);
+		print_vagas();
 		pthread_cond_broadcast(&iniciantes_cond);
 		pthread_cond_broadcast(&experientes_cond);
 		pthread_mutex_unlock(&mutex);
@@ -121,17 +132,17 @@ int main() {
 	pthread_t experientes[N], iniciantes[N];
 	int i;
 	int *id;
-
+	
 	for (i = 0; i < N; i++) {
 		id = (int *) malloc(sizeof(int));
 		*id = i;
-		pthread_create(&experientes[i], NULL, &experiente, (void*)id);
+		pthread_create(&iniciantes[i], NULL, &iniciante, (void*)id);
 	}
 
 	for (i = 0; i < N; i++) {
 		id = (int *) malloc(sizeof(int));
 		*id = i;
-		pthread_create(&iniciantes[i], NULL, &iniciante, (void*)id);
+		pthread_create(&experientes[i], NULL, &experiente, (void*)id);
 	}
 
 	for (i = 0; i < N; i++) {
