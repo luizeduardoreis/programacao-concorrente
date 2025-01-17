@@ -4,12 +4,12 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#define MAXIMO_DE_EXPERIENTES 5
 #define N 20
 #define NUMERO_DE_VAGAS 10
+#define MAXIMO_DE_EXPERIENTES NUMERO_DE_VAGAS / 2
 
 int experientes_estacionados = 0;
-bool vagas_ocupadas[NUMERO_DE_VAGAS];
+int vagas_ocupadas[NUMERO_DE_VAGAS];
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t iniciantes_cond = PTHREAD_COND_INITIALIZER;
@@ -53,7 +53,7 @@ int iniciante_estaciona() {
 int experiente_estaciona() {
 	for (int i = 0; i < NUMERO_DE_VAGAS; i++) {
 		if (!vagas_ocupadas[i]) {
-			vagas_ocupadas[i] = 1;
+			vagas_ocupadas[i] = 2;
 			return i;
 		}
 	}
@@ -66,7 +66,8 @@ void liberar_vaga(int vaga_idx) {
 void print_vagas() {
 	printf("|");
 	for (int i = 0; i < NUMERO_DE_VAGAS; i++) {
-		if (vagas_ocupadas[i]) printf("*|");
+		if (vagas_ocupadas[i] == 1) printf("*|");
+		else if (vagas_ocupadas[i] == 2) printf("^|");
 		else printf(" |");
 	}
 	printf("\n\n");
